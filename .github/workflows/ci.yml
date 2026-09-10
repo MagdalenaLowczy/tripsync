@@ -82,7 +82,9 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          coverage run src/manage.py test --no-input --verbosity 2
+          cd src
+          coverage run manage.py test --no-input --verbosity 2 --parallel=auto
+          coverage combine
           coverage report
           coverage xml
           coverage html
