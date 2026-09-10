@@ -95,6 +95,6 @@ jobs:
         with:
           name: coverage-report
           path: |
-            coverage.xml
-            htmlcov/
+            src/coverage.xml
+            src/htmlcov/
           retention-days: 7
