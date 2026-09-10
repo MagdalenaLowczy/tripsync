@@ -21,6 +21,9 @@ class TripAuditLogView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         )
 
     def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+
         messages.error(
             self.request, "You do not have access to this trip activity log."
         )

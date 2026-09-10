@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.test import TestCase, override_settings
@@ -26,20 +27,36 @@ class RegistrationViewTest(TestCase):
         self.assertTemplateUsed(response, "users/register.html")
         self.assertIsInstance(response.context["form"], UserRegistrationForm)
 
-    def test_registration_creates_inactive_user(self):
+    @patch("users.views.send_activation_email_async")
+    @patch("users.views.send_activation_email")
+    def test_registration_creates_inactive_user(self, mock_send_sync, mock_send_async):
         self.client.post(self.url, self.valid_data)
         user = User.objects.get(username="newuser")
         self.assertFalse(user.is_active)
 
-    def test_registration_redirects_after_success(self):
+        self.assertTrue(mock_send_async.delay.called or mock_send_sync.called)
+
+    @patch("users.views.send_activation_email_async")
+    @patch("users.views.send_activation_email")
+    def test_registration_redirects_after_success(
+        self, mock_send_sync, mock_send_async
+    ):
         response = self.client.post(self.url, self.valid_data)
         self.assertRedirects(response, reverse("login"))
 
-    def test_registration_shows_check_email_message(self):
+        self.assertTrue(mock_send_async.delay.called or mock_send_sync.called)
+
+    @patch("users.views.send_activation_email_async")
+    @patch("users.views.send_activation_email")
+    def test_registration_shows_check_email_message(
+        self, mock_send_sync, mock_send_async
+    ):
         response = self.client.post(self.url, self.valid_data)
         msgs = list(get_messages(response.wsgi_request))
         self.assertEqual(len(msgs), 1)
         self.assertIn("email", str(msgs[0]).lower())
+
+        self.assertTrue(mock_send_async.delay.called or mock_send_sync.called)
 
     def test_registration_fails_with_taken_username(self):
         UserFactory(username="takenuser")
